@@ -61,7 +61,7 @@ def search_content_in_fandom(url_base:str, url_search:str, search_term:str)->[Se
         search_result.append(SearchResult(title=title, url=url, description=description_text))
     return search_result
 
-def get_character_content(url_base:str,url:str)->[ContentLine]:
+def get_character_content(url_total:str)->[ContentLine]:
     """
     Get the content of a character's page via beautiful soup.
     Content div class = mw-content-ltr mw-parser-output
@@ -71,7 +71,6 @@ def get_character_content(url_base:str,url:str)->[ContentLine]:
 
     """
     content_lines = []
-    url_total = url_base + url
     content = create_beautiful_object(url_total)
     # get page title
     span_title  = content.find("span", "mw-page-title-main")
@@ -95,12 +94,25 @@ def get_character_content(url_base:str,url:str)->[ContentLine]:
                 content_lines.append(create_content_type_text(text))
     return content_lines
 
-def get_character_content_as_markdown(url_base:str, url:str)->str:
+def get_fandom_url_content_as_markdown(url:str)->str:
     """
     Get the content of a fandom page via beautiful soup and return it as markdown.
     """
-    content_lines = get_character_content(url_base, url)
+    content_lines = get_character_content( url)
     markdown_content = ""
     for line in content_lines:
         markdown_content += line.as_markdown()
+        #markdown_content +=line.text
     return markdown_content
+
+def get_fandom_url_content_as_string(url:str)->str:
+    """
+    Get the content of a fandom page via beautiful soup and return it as markdown.
+    """
+    content_lines = get_character_content( url)
+    content_string = ""
+    for line in content_lines:
+        content_string +=line.text
+    return content_string
+
+
