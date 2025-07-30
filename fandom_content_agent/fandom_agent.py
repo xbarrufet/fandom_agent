@@ -10,7 +10,7 @@ from tools.helpers import get_text_from_brackets
 
 load_dotenv()
 
-def lookup_40k_character_url(name:str) -> str:
+def lookup_40k_character_url(name:str,verbose=False) -> str:
     """
     Returns the path to the fandom content agent.
     """
@@ -35,7 +35,7 @@ def lookup_40k_character_url(name:str) -> str:
 
     react_propmpt = hub.pull("hwchase17/react")
     agent = create_react_agent(llm=llm, tools=tools_for_agent, prompt=react_propmpt)
-    agent_executor = AgentExecutor(agent=agent, tools=tools_for_agent, verbose=False)
+    agent_executor = AgentExecutor(agent=agent, tools=tools_for_agent, verbose=verbose)
 
     result = agent_executor.invoke(
         input={"input": prompt_template.format_prompt(character=name).to_string()}

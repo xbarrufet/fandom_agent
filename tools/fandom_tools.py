@@ -6,7 +6,7 @@ from tools.content_line import ContentLine, create_content_type_title, create_co
 from tools.search_result import SearchResult
 #from langchain_community.tools.tavily_search import TavilySearchResults
 from langchain_tavily import TavilySearch
-
+from tools.fandom_content_result import FandomContentResult
 # Example usage
 
 
@@ -61,7 +61,7 @@ def search_content_in_fandom(url_base:str, url_search:str, search_term:str)->[Se
         search_result.append(SearchResult(title=title, url=url, description=description_text))
     return search_result
 
-def get_character_content(url_total:str)->[ContentLine]:
+def get_character_content(url_total:str)->FandomContentResult:
     """
     Get the content of a character's page via beautiful soup.
     Content div class = mw-content-ltr mw-parser-output
@@ -70,18 +70,30 @@ def get_character_content(url_total:str)->[ContentLine]:
         Content start with p
 
     """
+    err_result = FandomContentResult(title="",url=url_total, content=[], url_image="")
     content_lines = []
+    title=""
+    url_image =""
     content = create_beautiful_object(url_total)
     # get page title
-    span_title  = content.find("span", "mw-page-title-main")
+    span_title = content.find("span", "mw-page-title-main")
     if span_title:
-        content_lines.append(create_content_type_title(span_title.text.strip(), 1))
+        title= span_title.text.strip()
     # get page content
     main_content = content.find("div", "mw-content-ltr mw-parser-output")
     if not main_content:
-        return "Content not found."
-    all_childs = main_content.find_all(recursive=False)
+        return err_result
 
+    figure_tag = main_content.find("figure")
+    if figure_tag:
+        tag_img = figure_tag.find("img")
+        if tag_img:
+            if tag_img.has_attr("data-src"):
+                url_image = tag_img["data-src"]
+            else:
+                url_image = tag_img.get("src")
+
+    all_childs = main_content.find_all(recursive=False)
     for child in all_childs:
         if child.name == 'h2' or child.name == 'h3' or child.name == 'h4':
             section_title = child.find("span", class_="mw-headline").text.strip()
@@ -92,27 +104,6 @@ def get_character_content(url_total:str)->[ContentLine]:
             text = child.get_text(strip=False)
             if text:
                 content_lines.append(create_content_type_text(text))
-    return content_lines
-
-def get_fandom_url_content_as_markdown(url:str)->str:
-    """
-    Get the content of a fandom page via beautiful soup and return it as markdown.
-    """
-    content_lines = get_character_content( url)
-    markdown_content = ""
-    for line in content_lines:
-        markdown_content += line.as_markdown()
-        #markdown_content +=line.text
-    return markdown_content
-
-def get_fandom_url_content_as_string(url:str)->str:
-    """
-    Get the content of a fandom page via beautiful soup and return it as markdown.
-    """
-    content_lines = get_character_content( url)
-    content_string = ""
-    for line in content_lines:
-        content_string +=line.text
-    return content_string
+    return FandomContentResult(title=title,url=url_total, content=content_lines, url_image=url_image)
 
 
